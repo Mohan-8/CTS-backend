@@ -5,8 +5,7 @@ const asyncHandler = require("express-async-handler");
 var SibApiV3Sdk = require("sib-api-v3-sdk");
 var defaultClient = SibApiV3Sdk.ApiClient.instance;
 var apiKey = defaultClient.authentications["api-key"];
-apiKey.apiKey =
-  "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";
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
 // Send Email function
 const generateRandomPassword = () => {
   const length = 8; // Length of the generated password
