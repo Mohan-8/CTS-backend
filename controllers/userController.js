@@ -115,7 +115,9 @@ const success = asyncHandler(async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 });
-
+const cancel = asyncHandler(async (req, res) => {
+  res.redirect("https://mohan-8.github.io/CTS/");
+});
 //
 const signUp = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, phone, membershipType, price } = req.body;
@@ -160,8 +162,8 @@ const signUp = asyncHandler(async (req, res) => {
         payment_method: "paypal",
       },
       redirect_urls: {
-        return_url: `/api/users/success?userId=${userId}`,
-        cancel_url: "/api/users/cancel",
+        return_url: `https://cts-backend-red.vercel.app/api/users/success?userId=${userId}`,
+        cancel_url: "https://cts-backend-red.vercel.app/api/users/cancel",
       },
       transactions: [
         {
