@@ -5,7 +5,8 @@ const asyncHandler = require("express-async-handler");
 var SibApiV3Sdk = require("sib-api-v3-sdk");
 var defaultClient = SibApiV3Sdk.ApiClient.instance;
 var apiKey = defaultClient.authentications["api-key"];
-apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
+apiKey.apiKey =
+  "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";
 // Send Email function
 const generateRandomPassword = () => {
   const length = 8; // Length of the generated password
@@ -21,6 +22,7 @@ const generateRandomPassword = () => {
 const sendEmail = async (toEmail, userId, token) => {
   try {
     const password = generateRandomPassword();
+    console.log(password);
     const sendSmtpEmail = {
       sender: { email: "smohanakrishnan82@gmail.com", name: "MohaN" },
       to: [{ email: toEmail }],
@@ -34,7 +36,9 @@ const sendEmail = async (toEmail, userId, token) => {
     };
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    console.log("came1");
     apiInstance.apiKey = apiKey;
+    console.log("came2");
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
     const pool = await dbPool.connect();
 
@@ -50,7 +54,7 @@ const sendEmail = async (toEmail, userId, token) => {
     console.log("Email sent successfully:", response);
     return response;
   } catch (error) {
-    console.error("Error sending email:", error);
+    // console.error("Error sending email:", error);
     throw error;
   }
 };
@@ -102,7 +106,7 @@ const success = asyncHandler(async (req, res) => {
           const jwtToken = tokenResult.rows[0].jwt_token;
 
           pool.release();
-          res.redirect("http://127.0.0.1:5500/");
+          res.redirect("https://mohan-8.github.io/CTS/");
         }
       }
     );
@@ -197,10 +201,7 @@ const signUp = asyncHandler(async (req, res) => {
           values: [userId, approvalUrl, token],
         };
         await pool.query(insertPaymentQuery);
-
-        // Send email to user for password setup
         await sendEmail(email, userId, token);
-        // Send PayPal approval_url to client
         res.json({ forwardLink: approvalUrl, Token: token });
       }
     });
@@ -307,7 +308,7 @@ const getUserDetails = asyncHandler(async (req, res) => {
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
-
+    // checkPaymentStatusAndUpdate(userId);
     const userDetails = {
       ...userResult.rows[0],
       paypal_payment_link: paymentResult.rows[0]?.paypal_payment_link || null,
@@ -361,6 +362,50 @@ const updateUserDetails = async (req, res) => {
     res.status(500).json({ message: "Failed to update user details" });
   }
 };
+// const checkPaymentStatusAndUpdate = async (userId) => {
+//   try {
+//     const pool = await dbPool.connect();
+
+//     // Retrieve PayPal payment link and token
+//     const paymentQuery = {
+//       text: `SELECT paypal_payment_link FROM payments WHERE user_id = $1`,
+//       values: [userId],
+//     };
+//     const paymentResult = await pool.query(paymentQuery);
+//     if (paymentResult.rows.length === 0) {
+//       pool.release();
+//       throw new Error("Payment details not found");
+//     }
+
+//     const { paypal_payment_link } = paymentResult.rows[0];
+//     if (!paymentId) {
+//       pool.release();
+//       throw new Error("Invalid PayPal payment link");
+//     }
+
+//     // Get PayPal payment details
+//     paypal.payment.get(paymentId, async (error, payment) => {
+//       if (error) {
+//         console.error("Error getting PayPal payment details:", error);
+//         pool.release();
+//         throw error;
+//       } else {
+//         const updatePaymentStatusQuery = {
+//           text: `UPDATE users SET payment_status = $1 WHERE id = $2`,
+//           values: [payment.state, userId],
+//         };
+
+//         await pool.query(updatePaymentStatusQuery);
+//         console.log("Payment status updated successfully");
+
+//         pool.release();
+//       }
+//     });
+//   } catch (err) {
+//     console.error("Error updating payment status:", err);
+//     throw err;
+//   }
+// };
 
 module.exports = {
   getAll,
