@@ -162,8 +162,8 @@ const signUp = asyncHandler(async (req, res) => {
         payment_method: "paypal",
       },
       redirect_urls: {
-        return_url: `https://cts-backend-red.vercel.app/api/users/success?userId=${userId}`,
-        cancel_url: "https://cts-backend-red.vercel.app/api/users/cancel",
+        return_url: `https://cts-backend-three.vercel.app/api/users/success?userId=${userId}`,
+        cancel_url: "https://cts-backend-three.vercel.app/api/users/cancel",
       },
       transactions: [
         {
