@@ -105,7 +105,7 @@ const success = asyncHandler(async (req, res) => {
           const jwtToken = tokenResult.rows[0].jwt_token;
 
           pool.release();
-          res.redirect("http://127.0.0.1:5500/");
+          res.redirect(`http://127.0.0.1:5500/?success=true`);
         }
       }
     );
