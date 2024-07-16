@@ -5,13 +5,12 @@ const asyncHandler = require("express-async-handler");
 var SibApiV3Sdk = require("sib-api-v3-sdk");
 var defaultClient = SibApiV3Sdk.ApiClient.instance;
 var apiKey = defaultClient.authentications["api-key"];
-apiKey.apiKey =
-  "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";
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
 // Send Email function
 const generateRandomPassword = () => {
   const length = 8; // Length of the generated password
   const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // Characters to include in the password
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let password = "";
   for (let i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length);
@@ -22,7 +21,7 @@ const generateRandomPassword = () => {
 const sendEmail = async (toEmail, userId, token) => {
   try {
     const password = generateRandomPassword();
-    console.log(password);
+    // console.log(password);
     const sendSmtpEmail = {
       sender: { email: "smohanakrishnan82@gmail.com", name: "MohaN" },
       to: [{ email: toEmail }],
@@ -36,9 +35,9 @@ const sendEmail = async (toEmail, userId, token) => {
     };
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    console.log("came1");
+    // console.log("came1");
     apiInstance.apiKey = apiKey;
-    console.log("came2");
+    // console.log("came2");
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
     const pool = await dbPool.connect();
 
@@ -106,7 +105,7 @@ const success = asyncHandler(async (req, res) => {
           const jwtToken = tokenResult.rows[0].jwt_token;
 
           pool.release();
-          res.redirect("https://mohan-8.github.io/CTS/");
+          res.redirect("http://127.0.0.1:5500/");
         }
       }
     );
@@ -116,7 +115,7 @@ const success = asyncHandler(async (req, res) => {
   }
 });
 const cancel = asyncHandler(async (req, res) => {
-  res.redirect("https://mohan-8.github.io/CTS/");
+  res.redirect("http://127.0.0.1:5500/");
 });
 //
 const signUp = asyncHandler(async (req, res) => {
@@ -162,8 +161,8 @@ const signUp = asyncHandler(async (req, res) => {
         payment_method: "paypal",
       },
       redirect_urls: {
-        return_url: `https://cts-backend-three.vercel.app/api/users/success?userId=${userId}`,
-        cancel_url: "https://cts-backend-three.vercel.app/api/users/cancel",
+        return_url: `http://localhost:5000/api/users/success?userId=${userId}`,
+        cancel_url: "http://localhost:5000/api/users/cancel",
       },
       transactions: [
         {
@@ -220,10 +219,21 @@ const login = asyncHandler(async (req, res) => {
     const pool = await dbPool.connect();
 
     const getTokenQuery = {
-      text: `SELECT user_id, jwt_token FROM login WHERE email = $1`,
-      values: [email],
+      text: `SELECT user_id, jwt_token FROM login WHERE email = $1 and password = md5($2)`,
+      values: [email, password],
     };
     const tokenResult = await pool.query(getTokenQuery);
+    // console.log(tokenResult);
+    const getmemberQuery = {
+      text: `SELECT membership_type FROM users WHERE email = $1 `,
+      values: [email],
+    };
+    const memberResult = await pool.query(getmemberQuery);
+    // console.log(memberResult);
+    let membershipType =
+      memberResult.rows.length > 0
+        ? memberResult.rows[0].membership_type
+        : null;
     let token =
       tokenResult.rows.length > 0 ? tokenResult.rows[0].jwt_token : null;
 
@@ -277,8 +287,8 @@ const login = asyncHandler(async (req, res) => {
     }
 
     pool.release();
-
-    res.json({ Token: token });
+    // console.log(membershipType);
+    res.json({ Token: token, membership_type: membershipType });
   } catch (error) {
     console.error("Error logging in:", error);
     return res.status(500).json({ error: "Invalid credential" });
@@ -364,50 +374,19 @@ const updateUserDetails = async (req, res) => {
     res.status(500).json({ message: "Failed to update user details" });
   }
 };
-// const checkPaymentStatusAndUpdate = async (userId) => {
-//   try {
-//     const pool = await dbPool.connect();
+const getAllUserDetails = async (req, res) => {
+  try {
+    const pool = await dbPool.connect();
+    const users = await pool.query(
+      "SELECT first_name, last_name,membership_type,payment_status FROM users"
+    );
+    pool.release();
 
-//     // Retrieve PayPal payment link and token
-//     const paymentQuery = {
-//       text: `SELECT paypal_payment_link FROM payments WHERE user_id = $1`,
-//       values: [userId],
-//     };
-//     const paymentResult = await pool.query(paymentQuery);
-//     if (paymentResult.rows.length === 0) {
-//       pool.release();
-//       throw new Error("Payment details not found");
-//     }
-
-//     const { paypal_payment_link } = paymentResult.rows[0];
-//     if (!paymentId) {
-//       pool.release();
-//       throw new Error("Invalid PayPal payment link");
-//     }
-
-//     // Get PayPal payment details
-//     paypal.payment.get(paymentId, async (error, payment) => {
-//       if (error) {
-//         console.error("Error getting PayPal payment details:", error);
-//         pool.release();
-//         throw error;
-//       } else {
-//         const updatePaymentStatusQuery = {
-//           text: `UPDATE users SET payment_status = $1 WHERE id = $2`,
-//           values: [payment.state, userId],
-//         };
-
-//         await pool.query(updatePaymentStatusQuery);
-//         console.log("Payment status updated successfully");
-
-//         pool.release();
-//       }
-//     });
-//   } catch (err) {
-//     console.error("Error updating payment status:", err);
-//     throw err;
-//   }
-// };
+    res.json({ users: users.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = {
   getAll,
@@ -416,4 +395,6 @@ module.exports = {
   success,
   getUserDetails,
   updateUserDetails,
+  cancel,
+  getAllUserDetails,
 };
