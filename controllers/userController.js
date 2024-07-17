@@ -105,7 +105,7 @@ const success = asyncHandler(async (req, res) => {
           const jwtToken = tokenResult.rows[0].jwt_token;
 
           pool.release();
-          res.redirect(`http://127.0.0.1:5500/?success=true`);
+          res.redirect(`https://mohan-8.github.io/CTS/?success=true`);
         }
       }
     );
@@ -115,7 +115,7 @@ const success = asyncHandler(async (req, res) => {
   }
 });
 const cancel = asyncHandler(async (req, res) => {
-  res.redirect("http://127.0.0.1:5500/");
+  res.redirect("https://mohan-8.github.io/CTS/?success=false");
 });
 //
 const signUp = asyncHandler(async (req, res) => {
@@ -161,8 +161,8 @@ const signUp = asyncHandler(async (req, res) => {
         payment_method: "paypal",
       },
       redirect_urls: {
-        return_url: `http://localhost:5000/api/users/success?userId=${userId}`,
-        cancel_url: "http://localhost:5000/api/users/cancel",
+        return_url: `https://cts-backend-three.vercel.app/api/users/success?userId=${userId}`,
+        cancel_url: "https://cts-backend-three.vercel.app/api/users/cancel",
       },
       transactions: [
         {
