@@ -37,6 +37,8 @@ const sendEmail = async (toEmail, userId, token) => {
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
     // console.log("came1");
     apiInstance.apiKey = apiKey;
+    const sendinblueApiKey = process.env.SENDINBLUE_API_KEY;
+    console.log("Sendinblue API Key:", sendinblueApiKey);
     // console.log("came2");
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
     const pool = await dbPool.connect();
